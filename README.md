@@ -27,6 +27,25 @@ func DoRedisNoReturnImpl(client redis.Conn, command string, args ...interface{})
 ```
 
 ```golang
+// redis-client在函数终止时会defer close链接对象，因此加入callback策略进行具体的处理
+func RedisRun(network string, host string, callback callback.DoRedisNoReturn, command string, params ...interface{}) (bool, error) {
+	client, err := redis.Dial(network, host)
+	defer client.Close()
+	if err != nil {
+		fmt.Println(err)
+		return false, err
+	}
+	_, err = callback(client, command, params...)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+
+```
+
+```golang
 // 应用案例
 func Test_RedisRun(t *testing.T) {
 	var params []interface{}
